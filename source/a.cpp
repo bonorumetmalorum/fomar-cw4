@@ -25,14 +25,16 @@ struct vec3
         z = 0.0;
     }
 
-    float length(){
-        return sqrtf(x*x + y*y + z*z);
+    float length()
+    {
+        return sqrtf(x * x + y * y + z * z);
     }
 
-    void normalise(){
-        x = x/length();
-        y = y/length();
-        z = z/length();
+    void normalise()
+    {
+        x = x / length();
+        y = y / length();
+        z = z / length();
     }
 
     vec3 operator-(vec3 &other)
@@ -50,7 +52,8 @@ struct vec3
         return vec3(this->x + other.x, this->y + other.y, this->z + other.z);
     }
 
-    vec3 operator/(float scalar){
+    vec3 operator/(float scalar)
+    {
         // cout << "divided " << this->z << endl;
         return vec3(this->x / scalar, this->y / scalar, this->z / scalar);
     }
@@ -80,7 +83,8 @@ struct eye
     vec3 up = vec3(0.0, 1.0, 0.0);
     float fov = 90.0;
 
-    eye(vec3 position, vec3 direction, vec3 up, float fov){
+    eye(vec3 position, vec3 direction, vec3 up, float fov)
+    {
         this->position = position;
         this->direction = direction;
         this->up = up;
@@ -88,7 +92,8 @@ struct eye
     }
 };
 
-struct light{
+struct light
+{
     vec3 position;
     vec3 direction;
     float diffuseIntensity;
@@ -96,7 +101,8 @@ struct light{
     float ambientIntensity;
 };
 
-struct Material{
+struct Material
+{
     float diffuseIntensity;
     float specularIntensity;
     float ambientIntensity;
@@ -110,7 +116,8 @@ struct triangle
 
     Material m;
 
-    triangle(vec3 A, vec3 B, vec3 C, Material m){
+    triangle(vec3 A, vec3 B, vec3 C, Material m)
+    {
         this->A = A;
         this->B = B;
         this->C = C;
@@ -154,13 +161,12 @@ bool isInsideTriangle(triangle t, vec3 point, vec3 planeNormal)
     vec3 p2 = point - t.C;
 
     triNormal1 = cross(edge0, p0);
-    triNormal2 = cross(edge1,p1);
+    triNormal2 = cross(edge1, p1);
     triNormal3 = cross(edge2, p2);
 
     float lTriNormal1 = triNormal1.length();
     float lTriNormal2 = triNormal2.length();
     float lTriNormal3 = triNormal3.length();
-
 
     float dot1 = dot(planeNormal, triNormal1);
     if (dot1 < 0)
@@ -175,14 +181,15 @@ bool isInsideTriangle(triangle t, vec3 point, vec3 planeNormal)
     return true;
 }
 
-bool isIntersectingTriangle(ray r, triangle t, vec3 & pointOut)
+bool isIntersectingTriangle(ray r, triangle t, vec3 &pointOut)
 {
     vec3 normal = getPlaneNormal(t);
     float distanceToPlane = dot(normal, t.A);
     float param = (dot(normal, r.start) + distanceToPlane) / dot(normal, r.direction);
     vec3 p = r.start + (r.direction * param);
     // cout << p.x << " " << p.y << " " << p.z << endl;
-    if(isInsideTriangle(t, p, normal)){
+    if (isInsideTriangle(t, p, normal))
+    {
         pointOut = p;
         return true;
     }
@@ -221,13 +228,13 @@ void setupImage(vector<vector<int>> &image, int width, int height)
     }
 }
 
-void baryinterp(int & R, int & G, int & B, vec3 point, triangle t)
+void baryinterp(int &R, int &G, int &B, vec3 point, triangle t)
 {
     R = 0;
     G = 0;
     B = 0;
     float alpha = distance(point, t.B, t.C) / distance(t.A, t.B, t.C); //distance from xstep,ystep to CB
-    float beta = distance(point, t.A, t.C) / distance(t.B, t.A, t.C);    //distance from xstep,ystep to AC
+    float beta = distance(point, t.A, t.C) / distance(t.B, t.A, t.C);  //distance from xstep,ystep to AC
     float gamma = distance(point, t.B, t.A) / distance(t.C, t.B, t.A); //distance from xstep,ystep to BA
     R = 255 * alpha;
     G = 255 * beta;
@@ -248,10 +255,11 @@ ray castray(eye e, float x, float y, int width, int height)
     return ray(e.position, direction);
 }
 
-vec3 convertCoordinates(vec3 coord, int width, int height){
-    float aspectRatio = float(width)/float(height);
+vec3 convertCoordinates(vec3 coord, int width, int height)
+{
+    float aspectRatio = float(width) / float(height);
     float xr = ((2 * ((coord.x) / width)) - 1) * aspectRatio;
-    float yr = ((2 * ((coord.y) / height))-1) * aspectRatio;
+    float yr = ((2 * ((coord.y) / height)) - 1) * aspectRatio;
     return vec3(xr, yr, 1);
 }
 
@@ -266,9 +274,9 @@ void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
-                image[ystep][xstep*3] = 0;
-                image[ystep][xstep*3 + 1] = 0;
-                image[ystep][xstep*3 + 2] = 0;
+                image[ystep][xstep * 3] = 0;
+                image[ystep][xstep * 3 + 1] = 0;
+                image[ystep][xstep * 3 + 2] = 0;
             }
         }
     }
@@ -287,28 +295,30 @@ void drawImage(vector<vector<int>> &image, eye e, triangle t, float xmax, float 
             {
                 int R, G, B;
                 baryinterp(R, G, B, pointInTriangle, tWorld);
-                image[ystep][xstep*3] = R;
-                image[ystep][xstep*3 + 1] = G;
-                image[ystep][xstep*3 + 2] = B;
+                image[ystep][xstep * 3] = R;
+                image[ystep][xstep * 3 + 1] = G;
+                image[ystep][xstep * 3 + 2] = B;
             }
         }
     }
 }
 
-float computeDiffuse(vec3 point, light l, triangle t){
+float computeDiffuse(vec3 point, light l, triangle t)
+{
     vec3 triangleNormal = getPlaneNormal(t);
     vec3 vl = point - l.position;
     float numerator = dot(triangleNormal, vl);
     float denom = triangleNormal.length() * vl.length();
     // cout << normalised << endl;
-    return l.diffuseIntensity * t.m.diffuseIntensity * (numerator/denom);
+    return l.diffuseIntensity * t.m.diffuseIntensity * (numerator / denom);
 }
 
-float computeSpecular(vec3 point, light l, triangle t, eye e){
+float computeSpecular(vec3 point, light l, triangle t, eye e)
+{
     vec3 triangleNormal = getPlaneNormal(t);
     vec3 vl = l.position - point;
     vec3 ve = e.position - point;
-    vec3 vb = (vl + ve)/2;
+    vec3 vb = (vl + ve) / 2;
     // cout << vb.x << endl;
     float numerator = dot(triangleNormal, vb);
     float denom = triangleNormal.length() * vb.length();
@@ -318,7 +328,8 @@ float computeSpecular(vec3 point, light l, triangle t, eye e){
     return l.specularIntensity * t.m.specularIntensity * powf64(angle, 100);
 }
 
-float computeAmbient(vec3 point, light l, Material m){
+float computeAmbient(vec3 point, light l, Material m)
+{
     return l.ambientIntensity * m.ambientIntensity;
 }
 
@@ -333,14 +344,14 @@ void drawImageAmbient(vector<vector<int>> &image, eye e, triangle t, light l, fl
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
-                int R = 0; 
+                int R = 0;
                 int G = 255;
                 int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
                 float amt = computeAmbient(pointInTriangle, l, tWorld.m);
-                image[ystep][xstep*3] = R*amt;
-                image[ystep][xstep*3 + 1] = G*amt;
-                image[ystep][xstep*3 + 2] = B*amt;
+                image[ystep][xstep * 3] = R * amt;
+                image[ystep][xstep * 3 + 1] = G * amt;
+                image[ystep][xstep * 3 + 2] = B * amt;
             }
         }
     }
@@ -357,19 +368,18 @@ void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, f
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
-                int R = 0; 
+                int R = 0;
                 int G = 255;
                 int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
                 float amt = computeSpecular(pointInTriangle, l, tWorld, e);
-                image[ystep][xstep*3] = R*amt;
-                image[ystep][xstep*3 + 1] = G*amt;
-                image[ystep][xstep*3 + 2] = B*amt;
+                image[ystep][xstep * 3] = R * amt;
+                image[ystep][xstep * 3 + 1] = G * amt;
+                image[ystep][xstep * 3 + 2] = B * amt;
             }
         }
     }
 }
-
 
 void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
@@ -382,19 +392,53 @@ void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, fl
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
-                int R = 0; 
+                int R = 0;
                 int G = 255;
-                int B = 0;  
+                int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
                 float amt = computeDiffuse(pointInTriangle, l, tWorld);
-                image[ystep][xstep*3] = R*amt;
-                image[ystep][xstep*3 + 1] = G*amt;
-                image[ystep][xstep*3 + 2] = B*amt;
+                image[ystep][xstep * 3] = R * amt;
+                image[ystep][xstep * 3 + 1] = G * amt;
+                image[ystep][xstep * 3 + 2] = B * amt;
             }
         }
     }
 }
 
+void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
+{
+    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    for (int ystep = ymax - 1; ystep >= 0; ystep--)
+    {
+        for (int xstep = 0; xstep < xmax; xstep++)
+        {
+            ray r = castray(e, xstep, ystep, 128, 128);
+            vec3 pointInTriangle;
+            if (isIntersectingTriangle(r, tWorld, pointInTriangle))
+            {
+                int R = 0;
+                int G = 255;
+                int B = 0;
+                //baryinterp(R, G, B, pointInTriangle, tWorld);
+                float a = computeAmbient(pointInTriangle, l, tWorld.m);
+                float d = computeDiffuse(pointInTriangle, l, tWorld);
+                float s = computeSpecular(pointInTriangle, l, tWorld, e);
+
+                R = R * a + R * d + R * s;
+                G = G * a + G * d + G * s;
+                B = B * a + B * d + G * s;
+
+                R = (R < 0) ? 0 : (R > 255) ? 255 : R;
+                G = (G < 0) ? 0 : (G > 255) ? 255 : G;
+                B = (B < 0) ? 0 : (B > 255) ? 255 : B;
+
+                image[ystep][xstep * 3] = R;
+                image[ystep][xstep * 3 + 1] = G;
+                image[ystep][xstep * 3 + 2] = B;
+            }
+        }
+    }
+}
 
 void outputImage(ofstream &image, vector<vector<int>> &imageBuffer, int width, int height)
 {
@@ -406,9 +450,9 @@ void outputImage(ofstream &image, vector<vector<int>> &imageBuffer, int width, i
     {
         for (int xstep = 0; xstep < width; xstep++)
         {
-            image << imageBuffer[ystep][xstep * 3] << " " 
-            << imageBuffer[ystep][xstep * 3 + 1] << " " 
-            << imageBuffer[ystep][xstep * 3 + 2] << " ";
+            image << imageBuffer[ystep][xstep * 3] << " "
+                  << imageBuffer[ystep][xstep * 3 + 1] << " "
+                  << imageBuffer[ystep][xstep * 3 + 2] << " ";
         }
         image << endl;
     }
@@ -416,48 +460,69 @@ void outputImage(ofstream &image, vector<vector<int>> &imageBuffer, int width, i
 
 int main(int argc, char **argv)
 {
-    vec3 lightLocation = vec3{0.0,0.0,0.0};
-    light l = light{lightLocation, vec3{0.0,0.0,1.0}, 0.1, 0.5, 0.25};
+    vec3 lightLocation = vec3{0.0, 0.0, 0.0};
+    light l = light{lightLocation, vec3{0.0, 0.0, 1.0}, 0.1, 0.5, 0.1};
+    eye e = eye(vec3(0, 0, 0), vec3(0, 0, 1), vec3(0, 1, 0), 90.0);
+    triangle t(vec3(61, 10, 1), vec3(100, 100, 1), vec3(25, 90, 1), Material{0.9, 0.25, 0.1});
     //question 1a)
-    ofstream image("./out/abg.ppm");
-    vector<int> row(128 * 3, 129);
-    vector<vector<int>> imageBuffer(128, row);
-    setupImage(imageBuffer, 128, 128);
-    eye e = eye(vec3(0,0,0), vec3(0,0,1), vec3(0,1,0), 90.0);
-    triangle t(vec3(61, 10, 1), vec3(100, 100, 1), vec3(25, 90, 1), Material{0.9, 0.25, 0.5});
-    drawImageHalfPlaneTest(imageBuffer, e, t, 128, 128);
-    outputImage(image, imageBuffer, 128, 128);
-    image.close();
+    {
+        ofstream image("./out/abg.ppm");
+        vector<int> row(128 * 3, 129);
+        vector<vector<int>> imageBuffer(128, row);
+        setupImage(imageBuffer, 128, 128);
+        drawImageHalfPlaneTest(imageBuffer, e, t, 128, 128);
+        outputImage(image, imageBuffer, 128, 128);
+        image.close();
+    }
+
     //question 1b)
-    ofstream imageb("./out/colour.ppm");
-    vector<int> rowB(128 * 3, 129);
-    vector<vector<int>> imageBufferB(128, rowB);
-    setupImage(imageBufferB, 128, 128);
-    drawImage(imageBufferB, e, t, 128, 128);
-    outputImage(imageb, imageBufferB, 128, 128);
-    imageb.close();
+    {
+        ofstream imageb("./out/colour.ppm");
+        vector<int> rowB(128 * 3, 129);
+        vector<vector<int>> imageBufferB(128, rowB);
+        setupImage(imageBufferB, 128, 128);
+        drawImage(imageBufferB, e, t, 128, 128);
+        outputImage(imageb, imageBufferB, 128, 128);
+        imageb.close();
+    }
     //question 1c)
-    ofstream imagec("./out/ambient.ppm");
-    vector<int> rowC(128 * 3, 129);
-    vector<vector<int>> imageBufferC(128, rowC);
-    setupImage(imageBufferC, 128, 128);
-    drawImageAmbient(imageBufferC, e, t, l, 128, 128);
-    outputImage(imagec, imageBufferC, 128, 128);
-    imagec.close();
+    {
+        ofstream imagec("./out/ambient.ppm");
+        vector<int> rowC(128 * 3, 129);
+        vector<vector<int>> imageBufferC(128, rowC);
+        setupImage(imageBufferC, 128, 128);
+        drawImageAmbient(imageBufferC, e, t, l, 128, 128);
+        outputImage(imagec, imageBufferC, 128, 128);
+        imagec.close();
+    }
 
-    ofstream imaged("./out/diffuse.ppm");
-    vector<int> rowD(128 * 3, 129);
-    vector<vector<int>> imageBufferD(128, rowD);
-    setupImage(imageBufferD, 128, 128);
-    drawImageDiffuse(imageBufferD, e, t, l, 128, 128);
-    outputImage(imaged, imageBufferD, 128, 128);
-    imaged.close();
+    {
+        ofstream imaged("./out/diffuse.ppm");
+        vector<int> rowD(128 * 3, 129);
+        vector<vector<int>> imageBufferD(128, rowD);
+        setupImage(imageBufferD, 128, 128);
+        drawImageDiffuse(imageBufferD, e, t, l, 128, 128);
+        outputImage(imaged, imageBufferD, 128, 128);
+        imaged.close();
+    }
 
-    ofstream imagee("./out/specular.ppm");
-    vector<int> rowE(128 * 3, 129);
-    vector<vector<int>> imageBufferE(128, rowE);
-    setupImage(imageBufferE, 128, 128);
-    drawImageSpecular(imageBufferE, e, t, l, 128, 128);
-    outputImage(imagee, imageBufferE, 128, 128);
-    imagee.close();
+    {
+        ofstream imagee("./out/specular.ppm");
+        vector<int> rowE(128 * 3, 129);
+        vector<vector<int>> imageBufferE(128, rowE);
+        setupImage(imageBufferE, 128, 128);
+        drawImageSpecular(imageBufferE, e, t, l, 128, 128);
+        outputImage(imagee, imageBufferE, 128, 128);
+        imagee.close();
+    }
+
+    {
+        ofstream imagee("./out/fullyLit.ppm");
+        vector<int> rowE(128 * 3, 129);
+        vector<vector<int>> imageBufferE(128, rowE);
+        setupImage(imageBufferE, 128, 128);
+        drawImageWithLighting(imageBufferE, e, t, l, 128, 128);
+        outputImage(imagee, imageBufferE, 128, 128);
+        imagee.close();
+    }
 }
