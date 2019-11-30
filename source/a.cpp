@@ -201,6 +201,10 @@ bool isIntersectingTriangle(ray r, triangle t, vec3 &pointOut)
     vec3 numerator = t.A - r.start;
     float d = dot(numerator, normal) / denom ;
 
+    if(d < 0){
+        return false;
+    }
+
 
     vec3 p = r.start + (r.direction * d);
     // cout << p.x << " " << p.y << " " << p.z << endl;
