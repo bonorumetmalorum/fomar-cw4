@@ -42,8 +42,12 @@ struct vec3
         return vec3(this->x - other.x, this->y - other.y, this->z - other.z);
     }
 
-    vec3 operator*(float &scalar)
-    {
+    // vec3 operator*(float &scalar)
+    // {
+    //     return vec3(this->x * scalar, this->y * scalar, this->z * scalar);
+    // }
+
+    vec3 operator*(float scalar){
         return vec3(this->x * scalar, this->y * scalar, this->z * scalar);
     }
 
@@ -186,16 +190,24 @@ bool isIntersectingTriangle(ray r, triangle t, vec3 &pointOut)
 {
     vec3 normal = getPlaneNormal(t);
     // cout << normal.x << " " << normal.y << " " << normal.z << endl;
-    float distanceToPlane = dot(normal, t.A);
-    float param = (dot(normal, r.start) + distanceToPlane) / dot(normal, r.direction);
-    if(param < 0){
+    //float distanceToPlane = dot(normal, t.A);
+    //float param = (dot(normal, r.start) + distanceToPlane) / dot(normal, r.direction);
+    float denom = dot(normal, r.direction);
+
+    if(denom == 0){
         return false;
     }
-    vec3 p = r.start + (r.direction * param);
+    
+    vec3 numerator = t.A - r.start;
+    float d = dot(numerator, normal) / denom ;
+
+
+    vec3 p = r.start + (r.direction * d);
     // cout << p.x << " " << p.y << " " << p.z << endl;
     if (isInsideTriangle(t, p, normal))
     {
         pointOut = p;
+
         return true;
     }
     return false;
@@ -251,45 +263,41 @@ void baryinterp(int &R, int &G, int &B, vec3 point, triangle t)
     B = (B < 0) ? 0 : (B > 255) ? 255 : B;
 };
 
-ray castray(vec3 origin, vec3 location, int width, int height)
+ray castray(vec3 origin, vec3 location)
 {
     // cout << "pixel x: " << x << " pixel y: " << y << endl;
-    float xr = (2 * ((location.x + 0.5) / width) - 1);
-    float yr = (1 - (2 * ((location.y + 0.5) / height)));
+    // float xr = (2 * ((location.x + 0.5) / width) - 1);
+    // float yr = ((2 * ((location.y + 0.5) / height)) - 1);
     // cout << "worldspace x: " << xr << " worldspace y: " << yr << endl;
-    vec3 direction = vec3(xr, yr, location.z);
-    direction = direction - origin;
+    // vec3 direction = vec3(xr, yr, location.z);
+    vec3 direction = location - origin;
     //direction.normalise();
     return ray(origin, direction);
-}
-
-bool isInShadow(vec3 point, vector<triangle> tris, light l)
-{
-    for (triangle t : tris)
-    {
-        ray r = castray(point, l.position, 128, 128);
-        vec3 pos;
-        if (!isIntersectingTriangle(r, t, pos))
-        {
-            cout << "false, no intersection with another triangle" << endl;
-            continue;
-        }
-        else
-        {
-            cout << "intersection" << endl;
-            return true;
-        }
-    }
-    return false;
 }
 
 vec3 convertCoordinates(vec3 coord, int width, int height)
 {
     float aspectRatio = float(width) / float(height);
     float xr = ((2 * ((coord.x) / width)) - 1) * aspectRatio;
-    float yr = (1 - (2 * ((coord.y) / height))) * aspectRatio;
+    float yr = ((2 * ((coord.y) / height)) -1) * aspectRatio;
     return vec3(xr, yr, coord.z);
 }
+
+
+bool isInShadow(vec3 point, vec3 normal, triangle t, light l)
+{
+    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    ray r = castray(point + 0.01, l.position);
+    vec3 pos;
+    cout << r.direction.x << " " << r.direction.y << " " << r.direction.z << endl;
+    if (isIntersectingTriangle(r, tWorld, pos))
+    {
+        cout << "yes" << endl;
+        return true;
+    }
+    return false;
+}
+
 
 void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float xmax, float ymax)
 {
@@ -298,7 +306,7 @@ void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
-            ray r = castray(e.position, vec3(xstep, ystep, 1.0), 128, 128);
+            ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
@@ -317,7 +325,7 @@ void drawImage(vector<vector<int>> &image, eye e, triangle t, float xmax, float 
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
-            ray r = castray(e.position, vec3(xstep, ystep, 1.0), 128, 128);
+            ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
@@ -334,7 +342,7 @@ void drawImage(vector<vector<int>> &image, eye e, triangle t, float xmax, float 
 float computeDiffuse(vec3 point, light l, triangle t)
 {
     vec3 triangleNormal = getPlaneNormal(t);
-    vec3 vl = l.position - point;
+    vec3 vl = point - l.position;
     float numerator = dot(triangleNormal, vl);
     float denom = triangleNormal.length() * vl.length();
     // cout << normalised << endl;
@@ -368,7 +376,7 @@ void drawImageAmbient(vector<vector<int>> &image, eye e, triangle t, light l, fl
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
-            ray r = castray(e.position, vec3(xstep, ystep, 1.0), 128, 128);
+            ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
@@ -387,12 +395,13 @@ void drawImageAmbient(vector<vector<int>> &image, eye e, triangle t, light l, fl
 
 void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
+    //light lWorld = light{convertCoordinates(l.position, 128, 128), l.direction, l.diffuseIntensity, l.specularIntensity, l.ambientIntensity};
     triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
-            ray r = castray(e.position, vec3(xstep, ystep, 1.0), 128, 128);
+            ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
@@ -416,7 +425,7 @@ void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, fl
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
-            ray r = castray(e.position, vec3(xstep, ystep, 1.0), 128, 128);
+            ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
@@ -440,7 +449,7 @@ void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light 
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
-            ray r = castray(e.position, vec3(xstep, ystep, 1.0), 128, 128);
+            ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
@@ -470,17 +479,29 @@ void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light 
 
 void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, light l, float xmax, float ymax)
 {
-    for(triangle t : tris){
-        triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    light lWorld = light{convertCoordinates(l.position, 128, 128), l.direction, l.diffuseIntensity, l.specularIntensity, l.ambientIntensity};
+    for(int i = 0; i < tris.size(); i++){
+        triangle tWorld = triangle(convertCoordinates(tris[i].A, 128, 128), convertCoordinates(tris[i].B, 128, 128), convertCoordinates(tris[i].C, 128, 128), tris[i].m);
         for (int ystep = ymax - 1; ystep >= 0; ystep--)
         {
             for (int xstep = 0; xstep < xmax; xstep++)
             {
-                ray r = castray(e.position, vec3(xstep, ystep, 1.0), 128, 128);
+                ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
                 vec3 pointInTriangle;
+                vec3 normal = getPlaneNormal(tWorld);
+                bool inShadow = false;
                 if (isIntersectingTriangle(r, tWorld, pointInTriangle))
                 {
-                    if(isInShadow(pointInTriangle,tris,l)){
+                    for(int j = 0; j < tris.size(); j++){
+                        if(j == i){
+                            continue;
+                        }
+                        if(inShadow){
+                            break;
+                        }
+                        inShadow = isInShadow(pointInTriangle, normal, tris[j], l);
+                    }
+                    if(inShadow){ 
                         image[ystep][xstep * 3] = 0;
                         image[ystep][xstep * 3+1] = 0;
                         image[ystep][xstep * 3+2] = 0;
@@ -532,7 +553,7 @@ void outputImage(ofstream &image, vector<vector<int>> &imageBuffer, int width, i
 
 int main(int argc, char **argv)
 {
-    vec3 lightLocation = vec3{0.5, 0.5, 0.9};
+    vec3 lightLocation = vec3{0.5, 0.5, 0};
     light l = light{lightLocation, vec3{0.0, 0.0, 1.0}, 0.1, 0.5, 0.5};
     eye e = eye(vec3(0, 0, 0), vec3(0, 0, 1), vec3(0, 1, 0), 90.0);
     triangle t(vec3(61, 10, 1), vec3(100, 100, 1), vec3(25, 90, 1), Material{0.9, 0.25, 0.1});
@@ -600,6 +621,8 @@ int main(int argc, char **argv)
 
     {
         //setup ground plane
+        vec3 lightLoc = vec3{1, 1, -1};
+        light l = light{lightLoc, vec3{0.0, 0.0, -1.0}, 0.1, 0.5, 0.5};
         triangle t1(vec3(0, 0, 1), vec3(128, 0, 1), vec3(0, 0, 3), Material{0.9, 0.25, 0.1});
         triangle t2(vec3(128, 0, 1), vec3(128, 0, 3), vec3(0, 0, 3), Material{0.9, 0.25, 0.1});
         vector<triangle> tris;
