@@ -5,6 +5,9 @@
 
 using namespace std;
 
+/*
+    vec3 to help with vector operations
+*/
 struct vec3
 {
     float x;
@@ -47,7 +50,8 @@ struct vec3
     //     return vec3(this->x * scalar, this->y * scalar, this->z * scalar);
     // }
 
-    vec3 operator*(float scalar){
+    vec3 operator*(float scalar)
+    {
         return vec3(this->x * scalar, this->y * scalar, this->z * scalar);
     }
 
@@ -62,7 +66,8 @@ struct vec3
         return vec3(this->x / scalar, this->y / scalar, this->z / scalar);
     }
 
-    vec3 operator+(float other){
+    vec3 operator+(float other)
+    {
         return vec3(this->x + other, this->y + other, this->z + other);
     }
 };
@@ -81,6 +86,9 @@ float dot(vec3 &A, vec3 &B)
     return (A.x * B.x) + (A.y * B.y) + (A.z * B.z);
 }
 
+/*
+    eye/camera which encodes the position, direction from which the scene is viewed, and its up and fov 
+*/
 struct eye
 {
     vec3 position = vec3(0.0, 0.0, 0.0);
@@ -97,22 +105,47 @@ struct eye
     }
 };
 
+/*
+    vec3 redefinition for colour data
+*/
+typedef vec3 colour;
+
+/*
+    helper function to blend two colours together by simply multiplying them
+    @param a colour provided between the range 0-255 per channel
+    @param b colout provided between the range 0-1 per channel
+*/
+colour blend(colour a, colour b){
+    return colour(a.x * b.x, a.y * b.y,a.z * b.z);
+}
+
+/*
+    point light which encodes its colour, position, diffuse intensity, specular intensity and ambient intensity as well as the specular coefficient
+*/
 struct light
 {
+    colour rgb;
     vec3 position;
-    vec3 direction;
     float diffuseIntensity;
     float specularIntensity;
+    float specularCoeff;
     float ambientIntensity;
 };
 
+/*
+    Material which encodes the colour, diffuse intensity, specular intensity and ambient intensity
+*/
 struct Material
 {
+    colour rgb;
     float diffuseIntensity;
     float specularIntensity;
     float ambientIntensity;
 };
 
+/*
+    triangle which enodes its three vertices
+*/
 struct triangle
 {
     vec3 A = vec3(61, 10, 1);
@@ -130,6 +163,9 @@ struct triangle
     }
 };
 
+/*
+    ray which encodes the origin and direction
+*/
 struct ray
 {
     vec3 start;
@@ -142,6 +178,11 @@ struct ray
     }
 };
 
+/*
+    get the normal of a triangle and as a consequence the normal of the plane the triangle is on
+    @param t the triangle for which the normal will calculated provided in world coordinates
+    @return vec3 normal of the trianlge/plane in world coordinates
+*/
 vec3 getPlaneNormal(triangle t)
 {
     vec3 planeDim1 = t.B - t.A;
@@ -151,6 +192,13 @@ vec3 getPlaneNormal(triangle t)
     return normal;
 }
 
+/*
+    check if a point is inside a triangle by checking if the point is on the left of every edge
+    @param t the triangle to check if the point is inside provided in world coordinates
+    @param point the point to check for provided in world coordintaes
+    @param planeNormal the normal of the plane on which the triangle and point are on provided in world coordinates
+    @return true if the point is inside the triangle, false otherwise
+*/
 bool isInsideTriangle(triangle t, vec3 point, vec3 planeNormal)
 {
     vec3 triNormal1;
@@ -186,25 +234,32 @@ bool isInsideTriangle(triangle t, vec3 point, vec3 planeNormal)
     return true;
 }
 
+
+/*
+    check if a ray is intersecting a triangle
+    @param r the ray to use for checking intersection provided in world coordinates
+    @param t the triangle to check for intersection provided in world coordinates
+    @param pointOut the point at which the ray intersects the triangle (only set if there is an intersection)
+    @return true if there is an intersection and false otherwise
+*/
 bool isIntersectingTriangle(ray r, triangle t, vec3 &pointOut)
 {
     vec3 normal = getPlaneNormal(t);
-    // cout << normal.x << " " << normal.y << " " << normal.z << endl;
-    //float distanceToPlane = dot(normal, t.A);
-    //float param = (dot(normal, r.start) + distanceToPlane) / dot(normal, r.direction);
+
     float denom = dot(normal, r.direction);
 
-    if(denom == 0){
+    if (denom == 0)
+    {
         return false;
     }
-    
+
     vec3 numerator = t.A - r.start;
-    float d = dot(numerator, normal) / denom ;
+    float d = dot(numerator, normal) / denom;
 
-    if(d < 0){
+    if (d < 0)
+    {
         return false;
     }
-
 
     vec3 p = r.start + (r.direction * d);
     // cout << p.x << " " << p.y << " " << p.z << endl;
@@ -217,8 +272,13 @@ bool isIntersectingTriangle(ray r, triangle t, vec3 &pointOut)
     return false;
 }
 
-
-
+/*
+    calculate the distance of a point from an edge
+    @param point the point to calculate the distance for
+    @param vertex1 vertex at the end of the edge
+    @param vertex2 vertex at the other end of the edge
+    @return float the distance of the point from the edge
+*/
 float distance(vec3 point, vec3 vertex1, vec3 vertex2)
 {
     //point in relation to one end of line
@@ -238,6 +298,12 @@ float distance(vec3 point, vec3 vertex1, vec3 vertex2)
     return dotproduct / magnitudeNormal;
 }
 
+/*
+    helper function to set image colour to light yellow (255, 255, 129)
+    @param image the image buffer to setup
+    @param width the width of the image
+    @param height the height of the image
+*/
 void setupImage(vector<vector<int>> &image, int width, int height)
 {
     for (int i = 0; i < height; i++)
@@ -251,43 +317,65 @@ void setupImage(vector<vector<int>> &image, int width, int height)
     }
 }
 
-void baryinterp(int &R, int &G, int &B, vec3 point, triangle t)
+/*
+    use barycentric interpolation to determine the colour of a point on a triangle
+    @param point the point on the triangle in world coordinates
+    @param t the triangle in world coordinates
+    @return colour final colour of this point in range 0-255 for R, G, B
+*/
+colour baryinterp(vec3 point, triangle t)
 {
-    R = 0;
-    G = 0;
-    B = 0;
+    int R = 0;
+    int G = 0;
+    int B = 0;
     float alpha = distance(point, t.B, t.C) / distance(t.A, t.B, t.C); //distance from xstep,ystep to CB
     float beta = distance(point, t.A, t.C) / distance(t.B, t.A, t.C);  //distance from xstep,ystep to AC
     float gamma = distance(point, t.B, t.A) / distance(t.C, t.B, t.A); //distance from xstep,ystep to BA
     R = 255 * alpha;
     G = 255 * beta;
     B = 255 * gamma;
-    R = (R < 0) ? 0 : (R > 255) ? 255 : R;
-    G = (G < 0) ? 0 : (G > 255) ? 255 : G;
-    B = (B < 0) ? 0 : (B > 255) ? 255 : B;
+    vec3 colour(255,255,129);
+    colour.x = (R < 0) ? 0 : (R > 255) ? 255 : R;
+    colour.y = (G < 0) ? 0 : (G > 255) ? 255 : G;
+    colour.z = (B < 0) ? 0 : (B > 255) ? 255 : B;
+    return colour;
 };
 
+/*
+    cast a ray from the origin to the location
+    @param origin the point form which to cast provided in world coordinates
+    @param the direction in which to cast provided in world coordinates
+    @return ray which encodes the start position and computed direction
+*/
 ray castray(vec3 origin, vec3 location)
 {
-    // cout << "pixel x: " << x << " pixel y: " << y << endl;
-    // float xr = (2 * ((location.x + 0.5) / width) - 1);
-    // float yr = ((2 * ((location.y + 0.5) / height)) - 1);
-    // cout << "worldspace x: " << xr << " worldspace y: " << yr << endl;
-    // vec3 direction = vec3(xr, yr, location.z);
     vec3 direction = location - origin;
     //direction.normalise();
     return ray(origin, direction);
 }
 
+/*
+    convert pixel coordinates into world coordinates (this will only work for square images and an fov of 90 degrees)
+    @coord the pixel coordinates
+    @width the width of the image 
+    @height the height of the image
+*/
 vec3 convertCoordinates(vec3 coord, int width, int height)
 {
     float aspectRatio = float(width) / float(height);
     float xr = ((2 * ((coord.x) / width)) - 1) * aspectRatio;
-    float yr = ((2 * ((coord.y) / height)) -1) * aspectRatio;
+    float yr = ((2 * ((coord.y) / height)) - 1) * aspectRatio;
     return vec3(xr, yr, coord.z);
 }
 
-
+/*
+    cast shadow ray to determine if point is in a shadow
+    @param point the point from which to cast the shadow ray
+    @normal the normal of the plane on whic the point lives
+    @t the triangle to check shadow ray intersection against
+    @l the light source to which the shadow ray is cast
+    @return true if intersecting with triangle false otherwise
+*/
 bool isInShadow(vec3 point, vec3 normal, triangle t, light l)
 {
     triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
@@ -302,7 +390,14 @@ bool isInShadow(vec3 point, vec3 normal, triangle t, light l)
     return false;
 }
 
-
+/*
+    draw the scene using the halfplane test
+    @param image image buffer to store the pixels final colour values
+    @param e eye from which the scene is viewed provided in world coordinates
+    @param t triangle to draw provided in pixel coordinates
+    @param xmax image width
+    @param ymax image height
+*/
 void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float xmax, float ymax)
 {
     triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
@@ -322,6 +417,14 @@ void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float
     }
 }
 
+/*
+    use barycentric interpolation to draw a triangle in the scene
+    @param image image bufer to store final pixel colour values
+    @param e the eye from which the scene is viewed provided in world coordinates
+    @param t triangle to draw provided in pixel coordinates
+    @param xmax image width
+    @param ymax image height
+*/
 void drawImage(vector<vector<int>> &image, eye e, triangle t, float xmax, float ymax)
 {
     triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
@@ -333,27 +436,41 @@ void drawImage(vector<vector<int>> &image, eye e, triangle t, float xmax, float 
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
-                int R, G, B;
-                baryinterp(R, G, B, pointInTriangle, tWorld);
-                image[ystep][xstep * 3] = R;
-                image[ystep][xstep * 3 + 1] = G;
-                image[ystep][xstep * 3 + 2] = B;
+                colour c = baryinterp(pointInTriangle, tWorld);
+                image[ystep][xstep * 3] = c.x;
+                image[ystep][xstep * 3 + 1] = c.y;
+                image[ystep][xstep * 3 + 2] = c.z;
             }
         }
     }
 }
 
-float computeDiffuse(vec3 point, light l, triangle t)
+/*
+    compute the diffuse intensity at a point given the light and triangle
+    @param point the point at which to compute the diffuse intensity
+    @param l the light souce provided in world coordinates
+    @param t the triangle provided in world coordinates
+    @return colour the final diffuse colour intensity at this point
+*/
+colour computeDiffuse(vec3 point, light l, triangle t)
 {
     vec3 triangleNormal = getPlaneNormal(t);
     vec3 vl = point - l.position;
     float numerator = dot(triangleNormal, vl);
     float denom = triangleNormal.length() * vl.length();
     // cout << normalised << endl;
-    return l.diffuseIntensity * t.m.diffuseIntensity * (numerator / denom);
+    return l.rgb * l.diffuseIntensity * t.m.diffuseIntensity * (numerator / denom);
 }
 
-float computeSpecular(vec3 point, light l, triangle t, eye e)
+/*
+    compute the sepcular intensity at a point given a light source, triangle and eye
+    @param point the point at which to compute specular intensity
+    @param l the light source provided in world coordinates
+    @param t the triangle on which the point exists
+    @param e the eye from which the scene is viewed
+    @return colour the final specular colour intensity at this point
+*/
+colour computeSpecular(vec3 point, light l, triangle t, eye e)
 {
     vec3 triangleNormal = getPlaneNormal(t);
     vec3 vl = l.position - point;
@@ -365,14 +482,29 @@ float computeSpecular(vec3 point, light l, triangle t, eye e)
 
     float angle = numerator / denom;
     // cout << vb.x << vb.y << vb.z << endl;
-    return l.specularIntensity * t.m.specularIntensity * powf64(angle, 100);
+    return l.rgb * l.specularIntensity * t.m.specularIntensity * powf64(angle, l.specularCoeff);
 }
 
-float computeAmbient(vec3 point, light l, Material m)
+/*
+    compute the ambient colour for a point given a light source and a material
+    @param point the point at which to compute ambient intensity
+    @param l the light source, in world coordinates
+    @param m the matieral of the surface on which the point lives
+    @return the final colour intensity at this point
+*/
+colour computeAmbient(vec3 point, light l, Material m)
 {
-    return l.ambientIntensity * m.ambientIntensity;
+    return l.rgb * (l.ambientIntensity * m.ambientIntensity);
 }
 
+/*
+    draw triangle with only ambient colour
+    image buffer to store final pixel colour
+    eye from which to cast rays, provided in world coordinates
+    triangle to draw provided in pixel coordinates
+    light source provided in world coordinates
+    image dimensions
+*/
 void drawImageAmbient(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
     triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
@@ -384,19 +516,24 @@ void drawImageAmbient(vector<vector<int>> &image, eye e, triangle t, light l, fl
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
-                int R = 0;
-                int G = 255;
-                int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
-                float amt = computeAmbient(pointInTriangle, l, tWorld.m);
-                image[ystep][xstep * 3] = R * amt;
-                image[ystep][xstep * 3 + 1] = G * amt;
-                image[ystep][xstep * 3 + 2] = B * amt;
+                colour amt = blend(t.m.rgb, computeAmbient(pointInTriangle, l, tWorld.m));
+                image[ystep][xstep * 3] = amt.x;
+                image[ystep][xstep * 3 + 1] = amt.y;
+                image[ystep][xstep * 3 + 2] = amt.z;
             }
         }
     }
 }
 
+/*
+    draw triangle with only specular colour
+    image buffer to store final pixel colour
+    eye from which to cast rays, provided in world coordinates
+    triangle to draw provided in pixel coordinates
+    light source provided in world coordinates
+    image dimensions
+*/
 void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
     //light lWorld = light{convertCoordinates(l.position, 128, 128), l.direction, l.diffuseIntensity, l.specularIntensity, l.ambientIntensity};
@@ -413,15 +550,23 @@ void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, f
                 int G = 255;
                 int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
-                float amt = computeSpecular(pointInTriangle, l, tWorld, e);
-                image[ystep][xstep * 3] = R * amt;
-                image[ystep][xstep * 3 + 1] = G * amt;
-                image[ystep][xstep * 3 + 2] = B * amt;
+                colour amt = blend(t.m.rgb, computeSpecular(pointInTriangle, l, tWorld, e));
+                image[ystep][xstep * 3] = amt.x;
+                image[ystep][xstep * 3 + 1] = amt.y;
+                image[ystep][xstep * 3 + 2] = amt.z;
             }
         }
     }
 }
 
+/*
+    draw triangle with only diffuse colour
+    image buffer to store final pixel colour
+    eye from which to cast rays, provided in world coordinates
+    triangle to draw provided in pixel coordinates
+    light source provided in world coordinates
+    image dimensions
+*/
 void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
     triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
@@ -437,15 +582,23 @@ void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, fl
                 int G = 255;
                 int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
-                float amt = computeDiffuse(pointInTriangle, l, tWorld);
-                image[ystep][xstep * 3] = R * amt;
-                image[ystep][xstep * 3 + 1] = G * amt;
-                image[ystep][xstep * 3 + 2] = B * amt;
+                colour amt = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, tWorld));
+                image[ystep][xstep * 3] = amt.x;
+                image[ystep][xstep * 3 + 1] = amt.y;
+                image[ystep][xstep * 3 + 2] = amt.z;
             }
         }
     }
 }
 
+/*
+    draws the triangle with full ambient + diffuse + specular lighting from the blinn phong lighting model
+    image buffer to store final pixel colours
+    eye provided in world coordinates, to cast rays from
+    triangle to draw, in pixel coordinates
+    light provided in world coordinates
+    image dimensions
+*/
 void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
     triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
@@ -457,34 +610,40 @@ void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light 
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, tWorld, pointInTriangle))
             {
-                int R = 0;
-                int G = 255;
-                int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
-                float a = computeAmbient(pointInTriangle, l, tWorld.m);
-                float d = computeDiffuse(pointInTriangle, l, tWorld);
-                float s = computeSpecular(pointInTriangle, l, tWorld, e);
+                colour a = blend(t.m.rgb, computeAmbient(pointInTriangle, l, tWorld.m));
+                colour d = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, tWorld));
+                colour s = blend(t.m.rgb, computeSpecular(pointInTriangle, l, tWorld, e));
 
-                R = R * a + R * d + R * s;
-                G = G * a + G * d + G * s;
-                B = B * a + B * d + G * s;
+                colour p = a + d + s;
 
-                R = (R < 0) ? 0 : (R > 255) ? 255 : R;
-                G = (G < 0) ? 0 : (G > 255) ? 255 : G;
-                B = (B < 0) ? 0 : (B > 255) ? 255 : B;
+                p.x = (p.x < 0) ? 0 : (p.x > 255) ? 255 : p.x;
+                p.y = (p.y < 0) ? 0 : (p.y > 255) ? 255 : p.y;
+                p.z = (p.z < 0) ? 0 : (p.z > 255) ? 255 : p.z;
 
-                image[ystep][xstep * 3] = R;
-                image[ystep][xstep * 3 + 1] = G;
-                image[ystep][xstep * 3 + 2] = B;
+                image[ystep][xstep * 3] = p.x;
+                image[ystep][xstep * 3 + 1] = p.y;
+                image[ystep][xstep * 3 + 2] = p.z;
             }
         }
     }
 }
 
+/*
+    image buffer to output final pixel colours
+    draw an array of triangles, sorted from farthest back to closest forward
+    draws with blinn-phong lighting
+    draws with shadow rays
+    triangles must be supplied in pixel coordinates
+    light must be provided in world coordinates
+    eye must be provided in world coordinates
+    image dimensions must be provided
+*/
 void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, light l, float xmax, float ymax)
 {
-    light lWorld = light{convertCoordinates(l.position, 128, 128), l.direction, l.diffuseIntensity, l.specularIntensity, l.ambientIntensity};
-    for(int i = 0; i < tris.size(); i++){
+    light lWorld = light{l.rgb, convertCoordinates(l.position, 128, 128), l.diffuseIntensity, l.specularIntensity, l.specularCoeff, l.ambientIntensity};
+    for (int i = 0; i < tris.size(); i++)
+    {
         triangle tWorld = triangle(convertCoordinates(tris[i].A, 128, 128), convertCoordinates(tris[i].B, 128, 128), convertCoordinates(tris[i].C, 128, 128), tris[i].m);
         for (int ystep = ymax - 1; ystep >= 0; ystep--)
         {
@@ -496,47 +655,53 @@ void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, lig
                 bool inShadow = false;
                 if (isIntersectingTriangle(r, tWorld, pointInTriangle))
                 {
-                    for(int j = 0; j < tris.size(); j++){
-                        if(j == i){
+                    for (int j = 0; j < tris.size(); j++)
+                    {
+                        if (j == i)
+                        {
                             continue;
                         }
-                        if(inShadow){
+                        if (inShadow)
+                        {
                             break;
                         }
                         inShadow = isInShadow(pointInTriangle, normal, tris[j], l);
                     }
-                    if(inShadow){ 
+                    if (inShadow)
+                    {
                         image[ystep][xstep * 3] = 0;
-                        image[ystep][xstep * 3+1] = 0;
-                        image[ystep][xstep * 3+2] = 0;
-                    }else{
+                        image[ystep][xstep * 3 + 1] = 0;
+                        image[ystep][xstep * 3 + 2] = 0;
+                    }
+                    else
+                    {
                         int R = 0;
                         int G = 255;
                         int B = 0;
                         //baryinterp(R, G, B, pointInTriangle, tWorld);
-                        float a = computeAmbient(pointInTriangle, l, tWorld.m);
-                        float d = computeDiffuse(pointInTriangle, l, tWorld);
-                        float s = computeSpecular(pointInTriangle, l, tWorld, e);
+                        colour a = blend(tris[i].m.rgb, computeAmbient(pointInTriangle, l, tWorld.m));
+                        colour d = blend(tris[i].m.rgb, computeDiffuse(pointInTriangle, l, tWorld));
+                        colour s = blend(tris[i].m.rgb, computeSpecular(pointInTriangle, l, tWorld, e));
 
-                        R = R * a + R * d + R * s;
-                        G = G * a + G * d + G * s;
-                        B = B * a + B * d + G * s;
+                        colour p = a + d + s;
 
-                        R = (R < 0) ? 0 : (R > 255) ? 255 : R;
-                        G = (G < 0) ? 0 : (G > 255) ? 255 : G;
-                        B = (B < 0) ? 0 : (B > 255) ? 255 : B;
+                        p.x = (p.x < 0) ? 0 : (p.x > 255) ? 255 : p.x;
+                        p.y = (p.y < 0) ? 0 : (p.y > 255) ? 255 : p.y;
+                        p.z = (p.z < 0) ? 0 : (p.z > 255) ? 255 : p.z;
 
-                        image[ystep][xstep * 3] = R;
-                        image[ystep][xstep * 3 + 1] = G;
-                        image[ystep][xstep * 3 + 2] = B;
+                        image[ystep][xstep * 3] = p.x;
+                        image[ystep][xstep * 3 + 1] = p.y;
+                        image[ystep][xstep * 3 + 2] = p.z;
                     }
-
                 }
             }
         }
     }
 }
 
+/*
+    write image buffer to ppm file
+*/
 void outputImage(ofstream &image, vector<vector<int>> &imageBuffer, int width, int height)
 {
     image << "P3" << endl;
@@ -557,10 +722,10 @@ void outputImage(ofstream &image, vector<vector<int>> &imageBuffer, int width, i
 
 int main(int argc, char **argv)
 {
-    vec3 lightLocation = vec3{0.5, 0.5, 0};
-    light l = light{lightLocation, vec3{0.0, 0.0, 1.0}, 0.1, 0.5, 0.5};
+    vec3 lightLocation = vec3{0, 0, -1};
+    light l = light{colour(1, 0, 0), lightLocation, 0.9, 0.8, 16.0, 0.5};
     eye e = eye(vec3(0, 0, 0), vec3(0, 0, 1), vec3(0, 1, 0), 90.0);
-    triangle t(vec3(61, 10, 1), vec3(100, 100, 1), vec3(25, 90, 1), Material{0.9, 0.25, 0.1});
+    triangle t(vec3(61, 10, 1), vec3(100, 100, 1), vec3(25, 90, 1), Material{colour(125, 125, 125), 0.5, 0.5, 0.5});
     //question 1a)
     {
         ofstream image("./out/abg.ppm");
@@ -625,10 +790,10 @@ int main(int argc, char **argv)
 
     {
         //setup ground plane
-        vec3 lightLoc = vec3{1, 1, -1};
-        light l = light{lightLoc, vec3{0.0, 0.0, -1.0}, 0.1, 0.5, 0.5};
-        triangle t1(vec3(0, 0, 1), vec3(128, 0, 1), vec3(0, 0, 3), Material{0.9, 0.25, 0.1});
-        triangle t2(vec3(128, 0, 1), vec3(128, 0, 3), vec3(0, 0, 3), Material{0.9, 0.25, 0.1});
+        vec3 lightLoc = vec3{1, 1, 0};
+        light l = light{vec3(1,1,1), lightLoc, 0.5, 0.5, 100.0, 0.5};
+        triangle t1(vec3(0, 0, 1), vec3(128, 0, 1), vec3(0, 0, 3), Material{vec3(255,10,90), 0.9, 0.25, 0.1});
+        triangle t2(vec3(128, 0, 1), vec3(128, 0, 3), vec3(0, 0, 3), Material{vec3(255,10,90), 0.9, 0.25, 0.1});
         vector<triangle> tris;
         tris.push_back(t1);
         tris.push_back(t2);
