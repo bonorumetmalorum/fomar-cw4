@@ -787,7 +787,7 @@ int main(int argc, char **argv)
         outputImage(imagee, imageBufferE, 128, 128);
         imagee.close();
     }
-
+    //question 1d)
     {
         //setup ground plane
         vec3 lightLoc = vec3{1, 1, 0};
