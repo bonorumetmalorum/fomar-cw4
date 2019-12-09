@@ -400,14 +400,14 @@ bool isInShadow(vec3 point, vec3 normal, triangle t, light l)
 */
 void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float xmax, float ymax)
 {
-    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
             ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
-            if (isIntersectingTriangle(r, tWorld, pointInTriangle))
+            if (isIntersectingTriangle(r, t, pointInTriangle))
             {
                 image[ystep][xstep * 3] = 0;
                 image[ystep][xstep * 3 + 1] = 0;
@@ -427,16 +427,16 @@ void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float
 */
 void drawImage(vector<vector<int>> &image, eye e, triangle t, float xmax, float ymax)
 {
-    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
             ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
-            if (isIntersectingTriangle(r, tWorld, pointInTriangle))
+            if (isIntersectingTriangle(r, t, pointInTriangle))
             {
-                colour c = baryinterp(pointInTriangle, tWorld);
+                colour c = baryinterp(pointInTriangle, t);
                 image[ystep][xstep * 3] = c.x;
                 image[ystep][xstep * 3 + 1] = c.y;
                 image[ystep][xstep * 3 + 2] = c.z;
@@ -507,17 +507,17 @@ colour computeAmbient(vec3 point, light l, Material m)
 */
 void drawImageAmbient(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
-    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
             ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
-            if (isIntersectingTriangle(r, tWorld, pointInTriangle))
+            if (isIntersectingTriangle(r, t, pointInTriangle))
             {
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
-                colour amt = blend(t.m.rgb, computeAmbient(pointInTriangle, l, tWorld.m));
+                colour amt = blend(t.m.rgb, computeAmbient(pointInTriangle, l, t.m));
                 image[ystep][xstep * 3] = amt.x;
                 image[ystep][xstep * 3 + 1] = amt.y;
                 image[ystep][xstep * 3 + 2] = amt.z;
@@ -537,20 +537,20 @@ void drawImageAmbient(vector<vector<int>> &image, eye e, triangle t, light l, fl
 void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
     //light lWorld = light{convertCoordinates(l.position, 128, 128), l.direction, l.diffuseIntensity, l.specularIntensity, l.ambientIntensity};
-    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
             ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
-            if (isIntersectingTriangle(r, tWorld, pointInTriangle))
+            if (isIntersectingTriangle(r, t, pointInTriangle))
             {
                 int R = 0;
                 int G = 255;
                 int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
-                colour amt = blend(t.m.rgb, computeSpecular(pointInTriangle, l, tWorld, e));
+                colour amt = blend(t.m.rgb, computeSpecular(pointInTriangle, l, t, e));
                 image[ystep][xstep * 3] = amt.x;
                 image[ystep][xstep * 3 + 1] = amt.y;
                 image[ystep][xstep * 3 + 2] = amt.z;
@@ -569,20 +569,20 @@ void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, f
 */
 void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
-    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
             ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
-            if (isIntersectingTriangle(r, tWorld, pointInTriangle))
+            if (isIntersectingTriangle(r, t, pointInTriangle))
             {
                 int R = 0;
                 int G = 255;
                 int B = 0;
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
-                colour amt = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, tWorld));
+                colour amt = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, t));
                 image[ystep][xstep * 3] = amt.x;
                 image[ystep][xstep * 3 + 1] = amt.y;
                 image[ystep][xstep * 3 + 2] = amt.z;
@@ -601,19 +601,19 @@ void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, fl
 */
 void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
-    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
         {
             ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
             vec3 pointInTriangle;
-            if (isIntersectingTriangle(r, tWorld, pointInTriangle))
+            if (isIntersectingTriangle(r, t, pointInTriangle))
             {
                 //baryinterp(R, G, B, pointInTriangle, tWorld);
-                colour a = blend(t.m.rgb, computeAmbient(pointInTriangle, l, tWorld.m));
-                colour d = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, tWorld));
-                colour s = blend(t.m.rgb, computeSpecular(pointInTriangle, l, tWorld, e));
+                colour a = blend(t.m.rgb, computeAmbient(pointInTriangle, l, t.m));
+                colour d = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, t));
+                colour s = blend(t.m.rgb, computeSpecular(pointInTriangle, l, t, e));
 
                 colour p = a + d + s;
 
@@ -723,9 +723,9 @@ void outputImage(ofstream &image, vector<vector<int>> &imageBuffer, int width, i
 int main(int argc, char **argv)
 {
     vec3 lightLocation = vec3{0, 0, -1};
-    light l = light{colour(1, 0, 0), lightLocation, 0.9, 0.8, 16.0, 0.5};
+    light l = light{colour(0, 255, 129), lightLocation, 0.01, 0.1, 100.0, 0.1};
     eye e = eye(vec3(0, 0, 0), vec3(0, 0, 1), vec3(0, 1, 0), 90.0);
-    triangle t(vec3(61, 10, 1), vec3(100, 100, 1), vec3(25, 90, 1), Material{colour(125, 125, 125), 0.5, 0.5, 0.5});
+    triangle t(vec3(-0.04688, -0.84375, 1), vec3(0.5625, 0.5625, 1), vec3(-0.60938, 0.40625, 1), Material{colour(125, 125, 125), 0.1, 0.1, 0.01});
     //question 1a)
     {
         ofstream image("./out/abg.ppm");
@@ -788,23 +788,23 @@ int main(int argc, char **argv)
         imagee.close();
     }
     //question 1d)
-    {
-        //setup ground plane
-        vec3 lightLoc = vec3{1, 1, 0};
-        light l = light{vec3(1,1,1), lightLoc, 0.5, 0.5, 100.0, 0.5};
-        triangle t1(vec3(0, 0, 1), vec3(128, 0, 1), vec3(0, 0, 3), Material{vec3(255,10,90), 0.9, 0.25, 0.1});
-        triangle t2(vec3(128, 0, 1), vec3(128, 0, 3), vec3(0, 0, 3), Material{vec3(255,10,90), 0.9, 0.25, 0.1});
-        vector<triangle> tris;
-        tris.push_back(t1);
-        tris.push_back(t2);
-        tris.push_back(t);
-        ofstream imagee("./out/tes.ppm");
-        vector<int> rowE(128 * 3, 129);
-        vector<vector<int>> imageBufferE(128, rowE);
-        setupImage(imageBufferE, 128, 128);
-        //use shadow rays
-        drawTriangles(imageBufferE, e, tris, l, 128, 128);
-        outputImage(imagee, imageBufferE, 128, 128);
-        imagee.close();
-    }
+    //{
+    //     //setup ground plane
+    //     vec3 lightLoc = vec3{0.5, 0.5, 0};
+    //     light l = light{vec3(0.5,0.5,1), lightLoc, 0.5, 0.6, 100.0, 0.5};
+    //     triangle t1(vec3(0, 0, 1), vec3(128, 0, 1), vec3(0, 0, 3), Material{vec3(255,10,90), 0.9, 0.25, 0.1});
+    //     triangle t2(vec3(128, 0, 1), vec3(128, 0, 3), vec3(0, 0, 3), Material{vec3(255,10,90), 0.9, 0.25, 0.1});
+    //     vector<triangle> tris;
+    //     tris.push_back(t1);
+    //     tris.push_back(t2);
+    //     tris.push_back(t);
+    //     ofstream imagee("./out/tes.ppm");
+    //     vector<int> rowE(128 * 3, 129);
+    //     vector<vector<int>> imageBufferE(128, rowE);
+    //     setupImage(imageBufferE, 128, 128);
+    //     //use shadow rays
+    //     drawTriangles(imageBufferE, e, tris, l, 128, 128);
+    //     outputImage(imagee, imageBufferE, 128, 128);
+    //     imagee.close();
+    // }
 }
