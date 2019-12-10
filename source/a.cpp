@@ -378,11 +378,11 @@ vec3 convertCoordinates(vec3 coord, int width, int height)
 */
 bool isInShadow(vec3 point, vec3 normal, triangle t, light l)
 {
-    triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
+    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     ray r = castray(point + 0.01, l.position);
     vec3 pos;
     cout << r.direction.x << " " << r.direction.y << " " << r.direction.z << endl;
-    if (isIntersectingTriangle(r, tWorld, pos))
+    if (isIntersectingTriangle(r, t, pos))
     {
         cout << "yes" << endl;
         return true;
@@ -641,19 +641,19 @@ void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light 
 */
 void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, light l, float xmax, float ymax)
 {
-    light lWorld = light{l.rgb, convertCoordinates(l.position, 128, 128), l.diffuseIntensity, l.specularIntensity, l.specularCoeff, l.ambientIntensity};
+    //light lWorld = light{l.rgb, convertCoordinates(l.position, 128, 128), l.diffuseIntensity, l.specularIntensity, l.specularCoeff, l.ambientIntensity};
     for (int i = 0; i < tris.size(); i++)
     {
-        triangle tWorld = triangle(convertCoordinates(tris[i].A, 128, 128), convertCoordinates(tris[i].B, 128, 128), convertCoordinates(tris[i].C, 128, 128), tris[i].m);
+        triangle t = tris[i];
         for (int ystep = ymax - 1; ystep >= 0; ystep--)
         {
             for (int xstep = 0; xstep < xmax; xstep++)
             {
                 ray r = castray(e.position, convertCoordinates(vec3(xstep, ystep, 1.0), 128, 128));
                 vec3 pointInTriangle;
-                vec3 normal = getPlaneNormal(tWorld);
+                vec3 normal = getPlaneNormal(t);
                 bool inShadow = false;
-                if (isIntersectingTriangle(r, tWorld, pointInTriangle))
+                if (isIntersectingTriangle(r, t, pointInTriangle))
                 {
                     for (int j = 0; j < tris.size(); j++)
                     {
@@ -679,9 +679,9 @@ void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, lig
                         int G = 255;
                         int B = 0;
                         //baryinterp(R, G, B, pointInTriangle, tWorld);
-                        colour a = blend(tris[i].m.rgb, computeAmbient(pointInTriangle, l, tWorld.m));
-                        colour d = blend(tris[i].m.rgb, computeDiffuse(pointInTriangle, l, tWorld));
-                        colour s = blend(tris[i].m.rgb, computeSpecular(pointInTriangle, l, tWorld, e));
+                        colour a = blend(tris[i].m.rgb, computeAmbient(pointInTriangle, l, t.m));
+                        colour d = blend(tris[i].m.rgb, computeDiffuse(pointInTriangle, l, t));
+                        colour s = blend(tris[i].m.rgb, computeSpecular(pointInTriangle, l, t, e));
 
                         colour p = a + d + s;
 
@@ -788,23 +788,23 @@ int main(int argc, char **argv)
         imagee.close();
     }
     //question 1d)
-    //{
-    //     //setup ground plane
-    //     vec3 lightLoc = vec3{0.5, 0.5, 0};
-    //     light l = light{vec3(0.5,0.5,1), lightLoc, 0.5, 0.6, 100.0, 0.5};
-    //     triangle t1(vec3(0, 0, 1), vec3(128, 0, 1), vec3(0, 0, 3), Material{vec3(255,10,90), 0.9, 0.25, 0.1});
-    //     triangle t2(vec3(128, 0, 1), vec3(128, 0, 3), vec3(0, 0, 3), Material{vec3(255,10,90), 0.9, 0.25, 0.1});
-    //     vector<triangle> tris;
-    //     tris.push_back(t1);
-    //     tris.push_back(t2);
-    //     tris.push_back(t);
-    //     ofstream imagee("./out/tes.ppm");
-    //     vector<int> rowE(128 * 3, 129);
-    //     vector<vector<int>> imageBufferE(128, rowE);
-    //     setupImage(imageBufferE, 128, 128);
-    //     //use shadow rays
-    //     drawTriangles(imageBufferE, e, tris, l, 128, 128);
-    //     outputImage(imagee, imageBufferE, 128, 128);
-    //     imagee.close();
-    // }
+    {
+        //setup ground plane
+        vec3 lightLoc = vec3{0.5, 0.5, 0.5};
+        light l = light{vec3(0.5,0.5,1), lightLoc, 0.5, 0.6, 100.0, 1};
+        triangle t1(vec3(1, -1, 1), vec3(1, -1, 2), vec3(-1, -1, 2), Material{vec3(255,10,90), 0.9, 0.25, 0.01});
+        triangle t2(vec3(-1, -1, 1), vec3(-1, -1, 2), vec3(1, -1, 1), Material{vec3(255,10,90), 0.9, 0.25, 0.5});
+        vector<triangle> tris;
+        tris.push_back(t1);
+        tris.push_back(t2);
+        tris.push_back(t);
+        ofstream imagee("./out/tes.ppm");
+        vector<int> rowE(128 * 3, 129);
+        vector<vector<int>> imageBufferE(128, rowE);
+        setupImage(imageBufferE, 128, 128);
+        //use shadow rays
+        drawTriangles(imageBufferE, e, tris, l, 128, 128);
+        outputImage(imagee, imageBufferE, 128, 128);
+        imagee.close();
+    }
 }
