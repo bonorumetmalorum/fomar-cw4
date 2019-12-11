@@ -790,10 +790,11 @@ int main(int argc, char **argv)
     //question 1d)
     {
         //setup ground plane
-        vec3 lightLoc = vec3{0.5, 0.5, 0.5};
-        light l = light{vec3(0.5,0.5,1), lightLoc, 0.5, 0.6, 100.0, 1};
+        vec3 lightLoc = vec3{0.5, 0.5, -1};
+        // light l = light{vec3(1,1,1), lightLoc, 0.5, 0.6, 100.0, 1};
+        light l = light{colour(0, 255, 129), lightLoc, 0.01, 0.1, 100.0, 0.1};
         triangle t1(vec3(1, -1, 1), vec3(1, -1, 2), vec3(-1, -1, 2), Material{vec3(255,10,90), 0.9, 0.25, 0.01});
-        triangle t2(vec3(-1, -1, 1), vec3(-1, -1, 2), vec3(1, -1, 1), Material{vec3(255,10,90), 0.9, 0.25, 0.5});
+        triangle t2(vec3(-1, -1, 2), vec3(-1, -1, 1), vec3(1, -1, 1), Material{vec3(255,10,90), 0.9, 0.25, 0.01});
         vector<triangle> tris;
         tris.push_back(t1);
         tris.push_back(t2);
