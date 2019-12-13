@@ -62,7 +62,6 @@ struct vec3
 
     vec3 operator/(float scalar)
     {
-        // cout << "divided " << this->z << endl;
         return vec3(this->x / scalar, this->y / scalar, this->z / scalar);
     }
 
@@ -262,7 +261,6 @@ bool isIntersectingTriangle(ray r, triangle t, vec3 &pointOut)
     }
 
     vec3 p = r.start + (r.direction * d);
-    // cout << p.x << " " << p.y << " " << p.z << endl;
     if (isInsideTriangle(t, p, normal))
     {
         pointOut = p;
@@ -380,10 +378,8 @@ bool isInShadow(vec3 point, vec3 normal, triangle t, light l)
 {
     ray r = castray(point + 0.01, l.position);
     vec3 pos;
-    cout << r.direction.x << " " << r.direction.y << " " << r.direction.z << endl;
     if (isIntersectingTriangle(r, t, pos))
     {
-        cout << "yes" << endl;
         return true;
     }
     return false;
@@ -789,7 +785,7 @@ int main(int argc, char **argv)
         tris.push_back(t1);
         tris.push_back(t2);
         tris.push_back(t);
-        ofstream imagee("./out/tes.ppm");
+        ofstream imagee("./out/groundplane.ppm");
         vector<int> rowE(128 * 3, 129);
         vector<vector<int>> imageBufferE(128, rowE);
         setupImage(imageBufferE, 128, 128);
