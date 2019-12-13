@@ -378,7 +378,6 @@ vec3 convertCoordinates(vec3 coord, int width, int height)
 */
 bool isInShadow(vec3 point, vec3 normal, triangle t, light l)
 {
-    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     ray r = castray(point + 0.01, l.position);
     vec3 pos;
     cout << r.direction.x << " " << r.direction.y << " " << r.direction.z << endl;
@@ -394,13 +393,12 @@ bool isInShadow(vec3 point, vec3 normal, triangle t, light l)
     draw the scene using the halfplane test
     @param image image buffer to store the pixels final colour values
     @param e eye from which the scene is viewed provided in world coordinates
-    @param t triangle to draw provided in pixel coordinates
+    @param t triangle to draw provided in world coordinates
     @param xmax image width
     @param ymax image height
 */
 void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float xmax, float ymax)
 {
-    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
@@ -421,7 +419,7 @@ void drawImageHalfPlaneTest(vector<vector<int>> &image, eye e, triangle t, float
     use barycentric interpolation to draw a triangle in the scene
     @param image image bufer to store final pixel colour values
     @param e the eye from which the scene is viewed provided in world coordinates
-    @param t triangle to draw provided in pixel coordinates
+    @param t triangle to draw provided in world coordinates
     @param xmax image width
     @param ymax image height
 */
@@ -458,7 +456,6 @@ colour computeDiffuse(vec3 point, light l, triangle t)
     vec3 vl = point - l.position;
     float numerator = dot(triangleNormal, vl);
     float denom = triangleNormal.length() * vl.length();
-    // cout << normalised << endl;
     return l.rgb * l.diffuseIntensity * t.m.diffuseIntensity * (numerator / denom);
 }
 
@@ -476,13 +473,11 @@ colour computeSpecular(vec3 point, light l, triangle t, eye e)
     vec3 vl = l.position - point;
     vec3 ve = e.position - point;
     vec3 vb = (vl + ve) / 2;
-    // cout << vb.x << endl;
     float numerator = dot(triangleNormal, vb);
     float denom = triangleNormal.length() * vb.length();
 
     float angle = numerator / denom;
-    // cout << vb.x << vb.y << vb.z << endl;
-    return l.rgb * l.specularIntensity * t.m.specularIntensity * powf64(angle, l.specularCoeff);
+    return l.rgb * l.specularIntensity * t.m.specularIntensity * powf(angle, l.specularCoeff);
 }
 
 /*
@@ -530,14 +525,12 @@ void drawImageAmbient(vector<vector<int>> &image, eye e, triangle t, light l, fl
     draw triangle with only specular colour
     image buffer to store final pixel colour
     eye from which to cast rays, provided in world coordinates
-    triangle to draw provided in pixel coordinates
+    triangle to draw provided in world coordinates
     light source provided in world coordinates
     image dimensions
 */
 void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
-    //light lWorld = light{convertCoordinates(l.position, 128, 128), l.direction, l.diffuseIntensity, l.specularIntensity, l.ambientIntensity};
-    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
@@ -563,13 +556,12 @@ void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, f
     draw triangle with only diffuse colour
     image buffer to store final pixel colour
     eye from which to cast rays, provided in world coordinates
-    triangle to draw provided in pixel coordinates
+    triangle to draw provided in world coordinates
     light source provided in world coordinates
     image dimensions
 */
 void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
-    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
@@ -595,13 +587,12 @@ void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, fl
     draws the triangle with full ambient + diffuse + specular lighting from the blinn phong lighting model
     image buffer to store final pixel colours
     eye provided in world coordinates, to cast rays from
-    triangle to draw, in pixel coordinates
+    triangle to draw, in world coordinates
     light provided in world coordinates
     image dimensions
 */
 void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light l, float xmax, float ymax)
 {
-    //triangle tWorld = triangle(convertCoordinates(t.A, 128, 128), convertCoordinates(t.B, 128, 128), convertCoordinates(t.C, 128, 128), t.m);
     for (int ystep = ymax - 1; ystep >= 0; ystep--)
     {
         for (int xstep = 0; xstep < xmax; xstep++)
@@ -634,14 +625,13 @@ void drawImageWithLighting(vector<vector<int>> &image, eye e, triangle t, light 
     draw an array of triangles, sorted from farthest back to closest forward
     draws with blinn-phong lighting
     draws with shadow rays
-    triangles must be supplied in pixel coordinates
+    triangles must be supplied in world coordinates
     light must be provided in world coordinates
     eye must be provided in world coordinates
     image dimensions must be provided
 */
 void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, light l, float xmax, float ymax)
 {
-    //light lWorld = light{l.rgb, convertCoordinates(l.position, 128, 128), l.diffuseIntensity, l.specularIntensity, l.specularCoeff, l.ambientIntensity};
     for (int i = 0; i < tris.size(); i++)
     {
         triangle t = tris[i];
@@ -669,9 +659,10 @@ void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, lig
                     }
                     if (inShadow)
                     {
-                        image[ystep][xstep * 3] = 0;
-                        image[ystep][xstep * 3 + 1] = 0;
-                        image[ystep][xstep * 3 + 2] = 0;
+                        colour a = blend(tris[i].m.rgb, computeAmbient(pointInTriangle, l, t.m));
+                        image[ystep][xstep * 3] = a.x;
+                        image[ystep][xstep * 3 + 1] = a.y;
+                        image[ystep][xstep * 3 + 2] = a.z;
                     }
                     else
                     {
@@ -791,10 +782,9 @@ int main(int argc, char **argv)
     {
         //setup ground plane
         vec3 lightLoc = vec3{0.5, 0.5, -1};
-        // light l = light{vec3(1,1,1), lightLoc, 0.5, 0.6, 100.0, 1};
-        light l = light{colour(0, 255, 129), lightLoc, 0.01, 0.1, 100.0, 0.1};
-        triangle t1(vec3(1, -1, 1), vec3(1, -1, 2), vec3(-1, -1, 2), Material{vec3(255,10,90), 0.9, 0.25, 0.01});
-        triangle t2(vec3(-1, -1, 2), vec3(-1, -1, 1), vec3(1, -1, 1), Material{vec3(255,10,90), 0.9, 0.25, 0.01});
+        light l = light{vec3(11,11,11), lightLoc, 0.1, 0.1, 100.0, 0.1};
+        triangle t1(vec3(1, -1, 1), vec3(1, -1, 2), vec3(-1, -1, 2), Material{vec3(255,10,90), 0.1, 0.1, 0.1});
+        triangle t2(vec3(-1, -1, 2), vec3(-1, -1, 1), vec3(1, -1, 1), Material{vec3(255,10,90), 0.1, 0.1, 0.1});
         vector<triangle> tris;
         tris.push_back(t1);
         tris.push_back(t2);
