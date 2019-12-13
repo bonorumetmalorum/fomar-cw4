@@ -782,7 +782,7 @@ int main(int argc, char **argv)
     {
         //setup ground plane
         vec3 lightLoc = vec3{0.5, 0.5, -1};
-        light l = light{vec3(11,11,11), lightLoc, 0.1, 0.1, 100.0, 0.1};
+        light l1 = light{vec3(11,11,11), lightLoc, 0.1, 0.1, 100.0, 0.1};
         triangle t1(vec3(1, -1, 1), vec3(1, -1, 2), vec3(-1, -1, 2), Material{vec3(255,10,90), 0.1, 0.1, 0.1});
         triangle t2(vec3(-1, -1, 2), vec3(-1, -1, 1), vec3(1, -1, 1), Material{vec3(255,10,90), 0.1, 0.1, 0.1});
         vector<triangle> tris;
@@ -794,7 +794,7 @@ int main(int argc, char **argv)
         vector<vector<int>> imageBufferE(128, rowE);
         setupImage(imageBufferE, 128, 128);
         //use shadow rays
-        drawTriangles(imageBufferE, e, tris, l, 128, 128);
+        drawTriangles(imageBufferE, e, tris, l1, 128, 128);
         outputImage(imagee, imageBufferE, 128, 128);
         imagee.close();
     }
