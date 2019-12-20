@@ -662,10 +662,6 @@ void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, lig
                     }
                     else
                     {
-                        int R = 0;
-                        int G = 255;
-                        int B = 0;
-                        //baryinterp(R, G, B, pointInTriangle, tWorld);
                         colour a = blend(t.m.rgb, computeAmbient(pointInTriangle, l, t.m));
                         colour d = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, t));
                         colour s = blend(t.m.rgb, computeSpecular(pointInTriangle, l, t, e));
