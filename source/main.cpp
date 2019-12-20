@@ -114,8 +114,9 @@ typedef vec3 colour;
     @param a colour provided between the range 0-255 per channel
     @param b colout provided between the range 0-1 per channel
 */
-colour blend(colour a, colour b){
-    return colour(a.x * b.x, a.y * b.y,a.z * b.z);
+colour blend(colour a, colour b)
+{
+    return colour(a.x * b.x, a.y * b.y, a.z * b.z);
 }
 
 /*
@@ -233,7 +234,6 @@ bool isInsideTriangle(triangle t, vec3 point, vec3 planeNormal)
     return true;
 }
 
-
 /*
     check if a ray is intersecting a triangle
     @param r the ray to use for checking intersection provided in world coordinates
@@ -332,7 +332,7 @@ colour baryinterp(vec3 point, triangle t)
     R = 255 * alpha;
     G = 255 * beta;
     B = 255 * gamma;
-    vec3 colour(255,255,129);
+    vec3 colour(255, 255, 129);
     colour.x = (R < 0) ? 0 : (R > 255) ? 255 : R;
     colour.y = (G < 0) ? 0 : (G > 255) ? 255 : G;
     colour.z = (B < 0) ? 0 : (B > 255) ? 255 : B;
@@ -766,9 +766,9 @@ int main(int argc, char **argv)
     {
         //setup ground plane
         vec3 lightLoc = vec3{0.5, 0.5, -1};
-        light l1 = light{vec3(255,255,255), lightLoc, 0.01, 0.01, 100, 0.01};
-        triangle t1(vec3(1, -1, 1), vec3(1, -1, 2), vec3(-1, -1, 2), Material{vec3(255,10,90), 0.1, 0.1, 0.1});
-        triangle t2(vec3(-1, -1, 2), vec3(-1, -1, 1), vec3(1, -1, 1), Material{vec3(255,10,90), 0.1, 0.1, 0.1});
+        light l1 = light{vec3(255, 255, 255), lightLoc, 0.01, 0.01, 100, 0.01};
+        triangle t1(vec3(1, -1, 1), vec3(1, -1, 2), vec3(-1, -1, 2), Material{vec3(255, 10, 90), 0.1, 0.1, 0.1});
+        triangle t2(vec3(-1, -1, 2), vec3(-1, -1, 1), vec3(1, -1, 1), Material{vec3(255, 10, 90), 0.1, 0.1, 0.1});
         vector<triangle> tris;
         tris.push_back(t1);
         tris.push_back(t2);
