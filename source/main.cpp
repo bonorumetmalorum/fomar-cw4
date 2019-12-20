@@ -535,10 +535,6 @@ void drawImageSpecular(vector<vector<int>> &image, eye e, triangle t, light l, f
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, t, pointInTriangle))
             {
-                int R = 0;
-                int G = 255;
-                int B = 0;
-                //baryinterp(R, G, B, pointInTriangle, tWorld);
                 colour amt = blend(t.m.rgb, computeSpecular(pointInTriangle, l, t, e));
                 image[ystep][xstep * 3] = amt.x;
                 image[ystep][xstep * 3 + 1] = amt.y;
@@ -566,10 +562,6 @@ void drawImageDiffuse(vector<vector<int>> &image, eye e, triangle t, light l, fl
             vec3 pointInTriangle;
             if (isIntersectingTriangle(r, t, pointInTriangle))
             {
-                int R = 0;
-                int G = 255;
-                int B = 0;
-                //baryinterp(R, G, B, pointInTriangle, tWorld);
                 colour amt = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, t));
                 image[ystep][xstep * 3] = amt.x;
                 image[ystep][xstep * 3 + 1] = amt.y;
