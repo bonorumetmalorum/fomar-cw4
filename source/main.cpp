@@ -666,9 +666,9 @@ void drawTriangles(vector<vector<int>> &image, eye e, vector<triangle> tris, lig
                         int G = 255;
                         int B = 0;
                         //baryinterp(R, G, B, pointInTriangle, tWorld);
-                        colour a = blend(tris[i].m.rgb, computeAmbient(pointInTriangle, l, t.m));
-                        colour d = blend(tris[i].m.rgb, computeDiffuse(pointInTriangle, l, t));
-                        colour s = blend(tris[i].m.rgb, computeSpecular(pointInTriangle, l, t, e));
+                        colour a = blend(t.m.rgb, computeAmbient(pointInTriangle, l, t.m));
+                        colour d = blend(t.m.rgb, computeDiffuse(pointInTriangle, l, t));
+                        colour s = blend(t.m.rgb, computeSpecular(pointInTriangle, l, t, e));
 
                         colour p = a + d + s;
 
@@ -778,7 +778,7 @@ int main(int argc, char **argv)
     {
         //setup ground plane
         vec3 lightLoc = vec3{0.5, 0.5, -1};
-        light l1 = light{vec3(11,11,11), lightLoc, 0.1, 0.1, 100.0, 0.1};
+        light l1 = light{vec3(255,255,255), lightLoc, 0.01, 0.01, 100, 0.01};
         triangle t1(vec3(1, -1, 1), vec3(1, -1, 2), vec3(-1, -1, 2), Material{vec3(255,10,90), 0.1, 0.1, 0.1});
         triangle t2(vec3(-1, -1, 2), vec3(-1, -1, 1), vec3(1, -1, 1), Material{vec3(255,10,90), 0.1, 0.1, 0.1});
         vector<triangle> tris;
